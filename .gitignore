@@ -1,0 +1,59 @@
+# Python bytecode files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.env/
+.venv/
+env/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Installers
+*.egg
+*.egg-info
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Test / coverage reports
+*.cover
+*.coverage
+*.hypothesis/
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.log
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# mypy
+.mypy_cache/
+
+# Pyre type checker
+.pyre/
+
+# dotenv
+.env
+
+# Poetry
+poetry.lock
+
+# Custom created files
+recording*
+.DS_Store
