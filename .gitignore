@@ -57,3 +57,6 @@ poetry.lock
 # Custom created files
 recording*
 .DS_Store
+summary/
+*pdf
+index.txt

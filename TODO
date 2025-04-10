@@ -15,3 +15,6 @@
 * - inform front desk to arrange meeting with contractor
 * - get contractor detail
 * - get regulation or policy documents
+
+get policy documents matching the query string
+get information references wrt chosen document

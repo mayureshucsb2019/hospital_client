@@ -20,9 +20,8 @@ def transcribe_audio_file(filename: str):
         f"./{filename}.wav", config=config
     )  # or local file path
     transcribeFilename = f"{filename}.txt"
-    print(transcript.utterances)
     for utterance in transcript.utterances:
-        print(f"Speaker {utterance.speaker}: {utterance.text}")
+        logger.info(f"Speaker {utterance.speaker}: {utterance.text}")
     with open(transcribeFilename, "w") as file:
         # Print the transcribed text
         logger.info(f"Writing to the text file {transcribeFilename} ...")
