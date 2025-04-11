@@ -1,4 +1,4 @@
-import os
+import os, asyncio
 from enum import Enum
 from pathlib import Path
 from typing import List, Optional, Union
@@ -17,6 +17,7 @@ from hospital_client.summarizer import (
     get_document_references,
     get_matching_documents,
     lookup_query,
+    generate_summary_txt_path
 )
 
 app = FastAPI()
@@ -84,12 +85,17 @@ async def upload_document(data=Depends(validate_upload)):
     with open(file_path, "wb") as f:
         content = await file.read()
         f.write(content)
-
-    return {
-        "message": f"Document '{filename}' uploaded successfully.",
-        "doc_type": doc_type,
-        "doc_path": file_path,
-    }
+    
+    summary_path = generate_summary_txt_path(Path(file_path),".txt")
+    while not summary_path.exists():
+        await asyncio.sleep(0.5)
+    
+    with open(summary_path, "r") as file:
+        return {
+            "message": file.read(),
+            "doc_type": doc_type,
+            "doc_path": file_path,
+        }
 
 
 # Define the Pydantic model for the input
@@ -188,6 +194,7 @@ async def search_document(
     - get_matching_documents: returns document names where query appears
     """
     if action == ActionType.get_matching_documents:
+        logger.info("Getting matching documents...")
         return MatchResult(document_names=await get_matching_documents(query))
     elif action == ActionType.get_document_references:
         if filename != "" and query != "":
@@ -198,7 +205,7 @@ async def search_document(
         )
     elif action == ActionType.lookup_query:
         if query != "":
-            answer = await lookup_query(query)
+            answer = await lookup_query(query, filename)
             return ReferenceResult(document_name=filename, reference=answer)
         raise HTTPException(status_code=404, detail="query required for checking")
 

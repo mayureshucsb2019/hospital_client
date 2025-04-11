@@ -115,20 +115,22 @@ def extract_text_pypdf2(pdf_path):
 async def get_matching_documents(query: str) -> List[str]:
     document_list = []
     for file in GOV_POLICY_SUMMARY_MAP.keys():
+        logger.info(f"Checked government document {file}")
         response = model.generate_content(
             f"Is summary related to query? Just: Yes or No. SUMMARY: {GOV_POLICY_SUMMARY_MAP[file]} QUERY: {query}"
         )
         if "yes" in str(response.text).lower():
             document_list.append(file)
-        await asyncio.sleep(5)
+        await asyncio.sleep(3)
 
     for file in HOS_POLICY_SUMMARY_MAP.keys():
+        logger.info(f"Checked hospital document {file}")
         response = model.generate_content(
             f"Is summary related to query? Just: Yes or No. SUMMARY: {HOS_POLICY_SUMMARY_MAP[file]} QUERY: {query}"
         )
         if "yes" in str(response.text).lower():
             document_list.append(file)
-        await asyncio.sleep(5)
+        await asyncio.sleep(3)
     return document_list
 
 
@@ -194,7 +196,7 @@ async def get_document_references(query: str, filename: str) -> str:
         return f"An error occurred: {e}"
 
 
-async def get_summarized_reference(pdf_path: Path, query: str) -> str:
+async def get_summarized_reference(pdf_path: Path, query: str, action: str="reference") -> str:
     reference_text = ""
     with open(pdf_path, "rb") as file:
         reader = PyPDF2.PdfReader(file)
@@ -207,18 +209,21 @@ async def get_summarized_reference(pdf_path: Path, query: str) -> str:
                 page = reader.pages[page_counter - 1]
                 text += f"PAGE NUMBER {page_counter} " + page.extract_text()
             if page_counter % PDF_PAGE_CHUNK_SIZE == 0 or page_counter == total_pages:
+                logger.info("parsed pages ")
                 try:
-                    response = model.generate_content(
-                        f"Check if the query can be referenced in these pages and quote accordingly with page numbers? TEXT: {text} QUERY: {query}. If yes summarize if else give ONLY one word answer: No"
-                        # f"Do you find contex of QUERY: {query} in TEXT: {text}. If yes give well rounded summary and reference in text. If no answer just No."
-                    )
+                    if action == "reference":
+                        response = model.generate_content(
+                            f"Check if the query can be referenced in these pages and quote accordingly with page numbers? TEXT: {text} QUERY: {query}. If yes summarize if else give ONLY one word answer: No"
+                        )
+                    elif action == "query":
+                        response = model.generate_content(
+                            f"TEXT: {text} QUERY: {query}"
+                        )
                     text = ""
                     if "no" not in response.text[:2].lower():
                         reference_text += (
                             "**" + pdf_path.stem + "**\n" + response.text + "\n"
                         )
-                        print(response.text)
-                    print("---------", pdf_path.stem, "---------")
                     errored = False
                     await asyncio.sleep(2)
                 except Exception as e:
@@ -229,21 +234,28 @@ async def get_summarized_reference(pdf_path: Path, query: str) -> str:
             page_counter += 1
         return reference_text
 
-
-async def lookup_query(query: str) -> str:
+async def lookup_query(query: str, filename: str = "") -> str:
     reference_text = "\n\n**REFERENCES:**\n\n"
     cwd = os.getcwd()
     try:
+        if filename != "":
+            if filename in GOV_POLICY_SUMMARY_MAP.keys():
+                pdf_path = Path(os.path.join(cwd, GOVT_DOC_DIR_PATH, filename + ".pdf"))
+                return await get_summarized_reference(pdf_path=pdf_path, query=query, action="query")
+            elif filename in HOS_POLICY_SUMMARY_MAP.keys():
+                pdf_path = Path(os.path.join(cwd, HOSP_DOC_DIR_PATH, filename + ".pdf"))
+                return await get_summarized_reference(pdf_path=pdf_path, query=query, action="query")
+            else:
+                raise FileNotFoundError
         response = model.generate_content(query)
-        print("received generic response")
         for filename in GOV_POLICY_SUMMARY_MAP.keys():
-            print(f"Checking file #################### {filename}")
+            logger.info(f"Checking {filename} in government policies")
             pdf_path = Path(os.path.join(cwd, GOVT_DOC_DIR_PATH, filename + ".pdf"))
             reference_text += await get_summarized_reference(
                 pdf_path=pdf_path, query=query
             )
         for filename in HOS_POLICY_SUMMARY_MAP.keys():
-            print(f"Checking file #################### {filename}")
+            logger.info(f"Checking {filename} in hospital policies")
             pdf_path = Path(os.path.join(cwd, HOSP_DOC_DIR_PATH, filename + ".pdf"))
             reference_text += await get_summarized_reference(
                 pdf_path=pdf_path, query=query

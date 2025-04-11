@@ -99,7 +99,7 @@ async def monitoring_agent():
                     convert_markdown_txt_to_pdf(summary_text_path)
                     with open(summary_text_path, "r") as f:
                         text = f.read()
-                    GOV_POLICY_SUMMARY_MAP[summary_text_path.stem] = text
+                    GOV_POLICY_SUMMARY_MAP[file.stem] = text
                     send_email_with_attachments(
                         subject="IMPORTANT: New government policy file added",
                         body="Please find summary of file attached with email",
@@ -144,7 +144,7 @@ async def monitoring_agent():
                     convert_markdown_txt_to_pdf(summary_text_path)
                     with open(summary_text_path, "r") as f:
                         text = f.read()
-                    HOS_POLICY_SUMMARY_MAP[summary_text_path.stem] = text
+                    HOS_POLICY_SUMMARY_MAP[file.stem] = text
                     send_email_with_attachments(
                         subject="IMPORTANT: New hospital policy file added",
                         body="Please find summary of file attached with email",
@@ -180,5 +180,5 @@ async def monitoring_agent():
         hos_doc_files = temp_hos_doc_files
         gov_doc_files = temp_gov_doc_files
 
-        logger.info("checked database for changes in policies")
-        await asyncio.sleep(2)
+        logger.info("checked database for changes in policies ... ")
+        await asyncio.sleep(3)
