@@ -64,7 +64,7 @@ async def validate_upload(file: UploadFile = File(...), doc_type: str = Form(...
 
     # Validate doc_type using the model
     if doc_type not in DocumentType.__members__:
-        raise ValueError(f"doc_type {v} is not allowed")
+        raise ValueError(f"doc_type {doc_type} is not allowed")
     return {"file": file, "doc_type": doc_type}
 
 
@@ -110,22 +110,6 @@ class DocumentSummary(BaseModel):
     doc_name: str
     doc_type: str
     doc_summary: str
-
-
-# Dependency function to validate document_name and doc_type
-def validate_document(request: DocumentRequest):
-    """
-    Validate the document's existence and type.
-    """
-    # Check if document exists
-    if request.doc_type == request.doc_name not in documents:
-        raise HTTPException(status_code=404, detail="Document not found.")
-
-    # Check if document type matches
-    if documents.get(request.doc_name, {}).get("type") != request.doc_type:
-        raise HTTPException(status_code=400, detail="Document type mismatch.")
-
-    return request
 
 
 @app.get("/summary", response_model=DocumentSummary)

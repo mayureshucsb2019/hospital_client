@@ -43,7 +43,6 @@ def generate_summary_txt_path(filepath: Path, extension: str) -> Path:
 
 
 def get_summarized_txt_from_pdf(filepath: Path) -> bool:
-    global model
     logger.info(filepath)
     try:
         with open(generate_summary_txt_path(filepath, ".txt"), "w") as summary_file:
@@ -80,7 +79,6 @@ def get_summarized_txt_from_pdf(filepath: Path) -> bool:
 
 
 def get_generated_text(filename: str, action: str):
-    global model
     with open(f"{filename}.txt", "r") as file:
         logger.info("Text generation started...")
         response = model.generate_content(f"{action}: {file.read()}")
@@ -93,7 +91,6 @@ def get_generated_text(filename: str, action: str):
 
 
 def check_inconsistencies(summary1: str, summary2: str) -> str:
-    global model
     response = model.generate_content(
         f"{CHECK_INCONSISTENCTIES}: FIRST POLICY: {summary1} -- SECOND POLICY: {summary2}"
     )
@@ -116,7 +113,6 @@ def extract_text_pypdf2(pdf_path):
 
 
 async def get_matching_documents(query: str) -> List[str]:
-    global model
     document_list = []
     for file in GOV_POLICY_SUMMARY_MAP.keys():
         response = model.generate_content(
@@ -137,7 +133,6 @@ async def get_matching_documents(query: str) -> List[str]:
 
 
 async def get_document_references(query: str, filename: str) -> str:
-    global model
     reference_text = ""
     cwd = os.getcwd()
     try:
@@ -236,7 +231,6 @@ async def get_summarized_reference(pdf_path: Path, query: str) -> str:
 
 
 async def lookup_query(query: str) -> str:
-    global model
     reference_text = "\n\n**REFERENCES:**\n\n"
     cwd = os.getcwd()
     try:
