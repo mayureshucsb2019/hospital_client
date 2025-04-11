@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- Base Image ----
-FROM python:3.10.17
+FROM python:3.10.17-bullseye
 
 # ---- Environment Setup ----
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -20,9 +20,7 @@ RUN apt-get update && \
     libsndfile1-dev \
     libasound2-dev \
     libsndfile1 \
-    libatlas-base-dev \
     libfftw3-dev \
-    libsndfile1-dev \
     libjack-dev \
     libreadline-dev \
     libssl-dev && \
@@ -48,8 +46,6 @@ COPY pyproject.toml poetry.lock /app/
 # ---- Install Dependencies ----
 RUN poetry config virtualenvs.create false && \
     poetry install --no-interaction --no-ansi
-
-
 
 # ---- Debugging Step (Optional) ----
 RUN ls -R /app/policy_docs
