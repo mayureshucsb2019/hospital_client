@@ -12,10 +12,17 @@ from hospital_client.constant import (
     HOS_POLICY_SUMMARY_MAP,
     HOSP_DOC_DIR_PATH,
 )
-from hospital_client.summarizer import get_document_references, get_matching_documents
-
+from hospital_client.summarizer import get_document_references, get_matching_documents, lookup_query
+from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins, but you can specify a list like ["http://localhost:3000"]
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allows all headers
+)
 
 # Define the Enum for document types
 class DocumentType(str, Enum):
@@ -114,23 +121,27 @@ def validate_document(request: DocumentRequest):
 
 
 @app.get("/summary", response_model=DocumentSummary)
-async def get_document_summary(request: DocumentRequest = Depends(validate_document)):
+async def get_document_summary(
+    doc_name: str = Query(..., description="The string to search for."),
+    doc_type: DocumentType = Query(..., description="The action to perform."),
+    ):
     """
     Return a summary of the specified document, with type validation.
     """
-    document_name = request.doc_name  # Use doc_name from validated request
-    doc_type = request.doc_type  # Use doc_type from validated request
+
+    if doc_type not in DocumentType.__members__:
+        raise HTTPException(status_code=404, detail="Document type is invalid.")
 
     if (
         doc_type == DocumentType.government
-        and document_name not in GOV_POLICY_SUMMARY_MAP
+        and doc_name not in GOV_POLICY_SUMMARY_MAP
     ):
         raise HTTPException(
             status_code=404, detail="Government policy document not found."
         )
     elif (
         doc_type == DocumentType.hospital
-        and document_name not in HOS_POLICY_SUMMARY_MAP
+        and doc_name not in HOS_POLICY_SUMMARY_MAP
     ):
         raise HTTPException(
             status_code=404, detail="Hospital policy document not found."
@@ -140,11 +151,11 @@ async def get_document_summary(request: DocumentRequest = Depends(validate_docum
     file_location: Path
     if doc_type == DocumentType.government:
         file_location = Path(
-            os.path.join(cwd, GOVT_DOC_DIR_PATH, "summary", document_name + ".txt")
+            os.path.join(cwd, GOVT_DOC_DIR_PATH, "summary", doc_name + "_summary.txt")
         )
     else:
         file_location = Path(
-            os.path.join(cwd, HOSP_DOC_DIR_PATH, "summary", document_name + ".txt")
+            os.path.join(cwd, HOSP_DOC_DIR_PATH, "summary", doc_name + "_summary.txt")
         )
 
     with open(file_location, "r") as file:
@@ -152,7 +163,7 @@ async def get_document_summary(request: DocumentRequest = Depends(validate_docum
 
     # Simulated summary response
     return {
-        "doc_name": document_name,
+        "doc_name": doc_name,
         "doc_type": doc_type,
         "doc_summary": summary_text,
     }
@@ -162,6 +173,7 @@ async def get_document_summary(request: DocumentRequest = Depends(validate_docum
 class ActionType(str, Enum):
     get_document_references = "get_document_references"
     get_matching_documents = "get_matching_documents"
+    lookup_query = "lookup_query"
 
 
 # Define the Response model for matching documents
@@ -192,10 +204,15 @@ async def search_document(
     if action == ActionType.get_matching_documents:
         return MatchResult(document_names=await get_matching_documents(query))
     elif action == ActionType.get_document_references:
-        if filename != "":
+        if filename != "" and query != "":
             reference = await get_document_references(query, filename=filename)
             return ReferenceResult(document_name=filename, reference=reference)
-        raise HTTPException(status_code=404, detail="Filename required for referencing")
+        raise HTTPException(status_code=404, detail="Filename and query required for referencing")
+    elif action == ActionType.lookup_query:
+        if query != "":
+            answer = await lookup_query(query)
+            return ReferenceResult(document_name=filename, reference=answer)
+        raise HTTPException(status_code=404, detail="query required for checking")
 
 
 # Optional: root for sanity check
