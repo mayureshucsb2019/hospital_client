@@ -69,13 +69,25 @@ async def monitoring_agent():
         logger.error(f"Directory not found: {hos_doc_dir}")
     if not hos_doc_dir.exists():
         logger.error(f"Directory not found: {hos_doc_dir}")
-    gov_doc_files = [f for f in gov_doc_dir.iterdir() if f.is_file() and f.suffix.lower() == '.pdf']
-    hos_doc_files = [f for f in hos_doc_dir.iterdir() if f.is_file() and f.suffix.lower() == '.pdf']
-    
+    gov_doc_files = [
+        f for f in gov_doc_dir.iterdir() if f.is_file() and f.suffix.lower() == ".pdf"
+    ]
+    hos_doc_files = [
+        f for f in hos_doc_dir.iterdir() if f.is_file() and f.suffix.lower() == ".pdf"
+    ]
+
     await init_policy_summary_maps(gov_doc_files, hos_doc_files)
     while True:
-        temp_gov_doc_files = [f for f in gov_doc_dir.iterdir() if f.is_file() and f.suffix.lower() == '.pdf']
-        temp_hos_doc_files = [f for f in hos_doc_dir.iterdir() if f.is_file() and f.suffix.lower() == '.pdf']
+        temp_gov_doc_files = [
+            f
+            for f in gov_doc_dir.iterdir()
+            if f.is_file() and f.suffix.lower() == ".pdf"
+        ]
+        temp_hos_doc_files = [
+            f
+            for f in hos_doc_dir.iterdir()
+            if f.is_file() and f.suffix.lower() == ".pdf"
+        ]
         if len(temp_gov_doc_files) > len(gov_doc_files):
             for file in temp_gov_doc_files:
                 if file not in gov_doc_files:
@@ -99,9 +111,9 @@ async def monitoring_agent():
                     # delete summary txt
                     for hos_file in hos_doc_files:
                         answer = check_inconsistencies(
-                                text,
-                                HOS_POLICY_SUMMARY_MAP[hos_file.stem],
-                            )
+                            text,
+                            HOS_POLICY_SUMMARY_MAP[hos_file.stem],
+                        )
                         if "yes" in answer[:3].lower():
                             send_email_with_attachments(
                                 subject=f"IMPORTANT: Found inconsistency in hospital policies {hos_file.stem} VS {summary_text_path.stem}",
@@ -144,9 +156,9 @@ async def monitoring_agent():
                     # delete summary txt
                     for gov_file in gov_doc_files:
                         answer = check_inconsistencies(
-                                    text,
-                                    GOV_POLICY_SUMMARY_MAP[gov_file.stem],
-                                )
+                            text,
+                            GOV_POLICY_SUMMARY_MAP[gov_file.stem],
+                        )
                         if "yes" in answer[:3].lower():
                             send_email_with_attachments(
                                 subject=f"IMPORTANT: Found inconsistency in hospital policies {summary_text_path.stem} VS {gov_file.stem}",

@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import List, Optional, Union
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, validator
 
 from hospital_client.constant import (
@@ -12,17 +13,24 @@ from hospital_client.constant import (
     HOS_POLICY_SUMMARY_MAP,
     HOSP_DOC_DIR_PATH,
 )
-from hospital_client.summarizer import get_document_references, get_matching_documents, lookup_query
-from fastapi.middleware.cors import CORSMiddleware
+from hospital_client.summarizer import (
+    get_document_references,
+    get_matching_documents,
+    lookup_query,
+)
+
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins, but you can specify a list like ["http://localhost:3000"]
+    allow_origins=[
+        "*"
+    ],  # Allows all origins, but you can specify a list like ["http://localhost:3000"]
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods (GET, POST, etc.)
     allow_headers=["*"],  # Allows all headers
 )
+
 
 # Define the Enum for document types
 class DocumentType(str, Enum):
@@ -124,7 +132,7 @@ def validate_document(request: DocumentRequest):
 async def get_document_summary(
     doc_name: str = Query(..., description="The string to search for."),
     doc_type: DocumentType = Query(..., description="The action to perform."),
-    ):
+):
     """
     Return a summary of the specified document, with type validation.
     """
@@ -132,17 +140,11 @@ async def get_document_summary(
     if doc_type not in DocumentType.__members__:
         raise HTTPException(status_code=404, detail="Document type is invalid.")
 
-    if (
-        doc_type == DocumentType.government
-        and doc_name not in GOV_POLICY_SUMMARY_MAP
-    ):
+    if doc_type == DocumentType.government and doc_name not in GOV_POLICY_SUMMARY_MAP:
         raise HTTPException(
             status_code=404, detail="Government policy document not found."
         )
-    elif (
-        doc_type == DocumentType.hospital
-        and doc_name not in HOS_POLICY_SUMMARY_MAP
-    ):
+    elif doc_type == DocumentType.hospital and doc_name not in HOS_POLICY_SUMMARY_MAP:
         raise HTTPException(
             status_code=404, detail="Hospital policy document not found."
         )
@@ -207,7 +209,9 @@ async def search_document(
         if filename != "" and query != "":
             reference = await get_document_references(query, filename=filename)
             return ReferenceResult(document_name=filename, reference=reference)
-        raise HTTPException(status_code=404, detail="Filename and query required for referencing")
+        raise HTTPException(
+            status_code=404, detail="Filename and query required for referencing"
+        )
     elif action == ActionType.lookup_query:
         if query != "":
             answer = await lookup_query(query)

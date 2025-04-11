@@ -92,7 +92,7 @@ def get_generated_text(filename: str, action: str):
         logger.info("Write summary completed...")
 
 
-def check_inconsistencies(summary1: str, summary2: str)-> str:
+def check_inconsistencies(summary1: str, summary2: str) -> str:
     global model
     response = model.generate_content(
         f"{CHECK_INCONSISTENCTIES}: FIRST POLICY: {summary1} -- SECOND POLICY: {summary2}"
@@ -198,7 +198,8 @@ async def get_document_references(query: str, filename: str) -> str:
     except Exception as e:
         return f"An error occurred: {e}"
 
-async def get_summarized_reference(pdf_path : Path, query: str) -> str:    
+
+async def get_summarized_reference(pdf_path: Path, query: str) -> str:
     reference_text = ""
     with open(pdf_path, "rb") as file:
         reader = PyPDF2.PdfReader(file)
@@ -210,20 +211,19 @@ async def get_summarized_reference(pdf_path : Path, query: str) -> str:
             if not errored:
                 page = reader.pages[page_counter - 1]
                 text += f"PAGE NUMBER {page_counter} " + page.extract_text()
-            if (
-                page_counter % PDF_PAGE_CHUNK_SIZE == 0
-                or page_counter == total_pages
-            ):  
-                try:              
+            if page_counter % PDF_PAGE_CHUNK_SIZE == 0 or page_counter == total_pages:
+                try:
                     response = model.generate_content(
                         f"Check if the query can be referenced in these pages and quote accordingly with page numbers? TEXT: {text} QUERY: {query}. If yes summarize if else give ONLY one word answer: No"
                         # f"Do you find contex of QUERY: {query} in TEXT: {text}. If yes give well rounded summary and reference in text. If no answer just No."
                     )
                     text = ""
                     if "no" not in response.text[:2].lower():
-                        reference_text += "**"+pdf_path.stem+"**\n"+response.text+"\n"
+                        reference_text += (
+                            "**" + pdf_path.stem + "**\n" + response.text + "\n"
+                        )
                         print(response.text)
-                    print("---------",pdf_path.stem, "---------")
+                    print("---------", pdf_path.stem, "---------")
                     errored = False
                     await asyncio.sleep(2)
                 except Exception as e:
@@ -245,14 +245,17 @@ async def lookup_query(query: str) -> str:
         for filename in GOV_POLICY_SUMMARY_MAP.keys():
             print(f"Checking file #################### {filename}")
             pdf_path = Path(os.path.join(cwd, GOVT_DOC_DIR_PATH, filename + ".pdf"))
-            reference_text += await get_summarized_reference(pdf_path=pdf_path, query=query)
+            reference_text += await get_summarized_reference(
+                pdf_path=pdf_path, query=query
+            )
         for filename in HOS_POLICY_SUMMARY_MAP.keys():
             print(f"Checking file #################### {filename}")
             pdf_path = Path(os.path.join(cwd, HOSP_DOC_DIR_PATH, filename + ".pdf"))
-            reference_text += await get_summarized_reference(pdf_path=pdf_path, query=query)
-        return response.text + reference_text        
+            reference_text += await get_summarized_reference(
+                pdf_path=pdf_path, query=query
+            )
+        return response.text + reference_text
     except FileNotFoundError:
         return "Error: PDF not found."
     except Exception as e:
         return f"An error occurred: {e}"
-    pass
