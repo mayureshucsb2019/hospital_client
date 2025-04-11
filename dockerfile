@@ -34,6 +34,10 @@ COPY policy_docs /app/policy_docs
 
 # ---- Copy the README.md File ----
 COPY README.md /app/
+
+# ---- Copy Application Code ----
+COPY . /app/
+
 # ---- Install Poetry ----
 RUN curl -sSL https://install.python-poetry.org | python3 - && \
     ln -s /root/.local/bin/poetry /usr/local/bin/poetry
@@ -45,8 +49,7 @@ COPY pyproject.toml poetry.lock /app/
 RUN poetry config virtualenvs.create false && \
     poetry install --no-interaction --no-ansi
 
-# ---- Copy Application Code ----
-COPY . /app/
+
 
 # ---- Debugging Step (Optional) ----
 RUN ls -R /app/policy_docs
