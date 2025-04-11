@@ -12,9 +12,15 @@ WORKDIR /app
 
 # ---- Install System Dependencies ----
 RUN apt-get update && \
-    apt-get install -y curl build-essential portaudio19-dev && \
+    apt-get install -y curl build-essential portaudio19-dev libportaudio2 && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
+
+# ---- Copy the Policy Docs Folder ----
+COPY policy_docs /app/policy_docs
+
+# ---- Copy the README.md File ----
+COPY README.md /app/
 
 # ---- Install Poetry ----
 RUN curl -sSL https://install.python-poetry.org | python3 - && \
