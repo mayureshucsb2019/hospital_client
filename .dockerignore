@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+*.db
+output.txt
+tests/
+*.pdf
+*.txt
+*.log
