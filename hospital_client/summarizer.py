@@ -209,7 +209,7 @@ async def get_summarized_reference(pdf_path: Path, query: str, action: str="refe
                 page = reader.pages[page_counter - 1]
                 text += f"PAGE NUMBER {page_counter} " + page.extract_text()
             if page_counter % PDF_PAGE_CHUNK_SIZE == 0 or page_counter == total_pages:
-                logger.info("parsed pages ")
+                logger.info(f"parsed pages {page_counter} off {total_pages}")
                 try:
                     if action == "reference":
                         response = model.generate_content(

@@ -19,7 +19,8 @@ from hospital_client.summarizer import (
     lookup_query,
     generate_summary_txt_path
 )
-
+from hospital_client.logger_config import setup_logger
+logger = setup_logger(__name__)
 app = FastAPI()
 
 app.add_middleware(
@@ -205,6 +206,7 @@ async def search_document(
         )
     elif action == ActionType.lookup_query:
         if query != "":
+            filename = "" if filename == None else filename 
             answer = await lookup_query(query, filename)
             return ReferenceResult(document_name=filename, reference=answer)
         raise HTTPException(status_code=404, detail="query required for checking")
